@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { EmailAlreadyExist } from '@/common/exceptions/email-already-exist.exception';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException
+} from '@nestjs/common';
 import { LoginDto } from 'src/auth/dtos/login.dto';
 import { RegisterDto } from 'src/auth/dtos/register.dto';
 import { BcryptService } from 'src/auth/providers/bcrypt.service';
@@ -15,7 +20,7 @@ export class AuthService {
 
   async register(registerDto: RegisterDto): Promise<void> {
     const existUser = await this.usersService.findByEmail(registerDto.email);
-    if (existUser) throw new BadRequestException('Email already in use');
+    if (existUser) throw new EmailAlreadyExist();
 
     registerDto.password = await this.bcryptService.hash(registerDto.password);
 
@@ -38,5 +43,17 @@ export class AuthService {
     const access_token = await this.tokenService.generateAccessToken(payload);
     const refresh_token = await this.tokenService.generateRefreshToken(payload);
     return { access_token, refresh_token };
+  }
+
+  async refresh(refreshToken: string): Promise<string> {
+    let userId: string;
+    try {
+      const payload = await this.tokenService.verifyRefreshToken(refreshToken);
+      userId = payload.sub;
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    return await this.tokenService.generateAccessToken({ sub: userId });
   }
 }

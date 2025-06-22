@@ -1,12 +1,14 @@
+import { Public } from '@/common/decorators/public.decorator';
 import {
   Body,
   Controller,
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginDto } from 'src/auth/dtos/login.dto';
 import { RegisterDto } from 'src/auth/dtos/register.dto';
@@ -15,6 +17,7 @@ import { RegisterDto } from 'src/auth/dtos/register.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('register')
   async register(
     @Body() registerDto: RegisterDto
@@ -23,6 +26,7 @@ export class AuthController {
     return { message: 'Registered successfully' };
   }
 
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(
@@ -38,6 +42,22 @@ export class AuthController {
       secure: true
     });
 
+    return { access_token };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response): { message: string } {
+    res.clearCookie('refresh_token');
+    return { message: 'Log out successfully' };
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('refresh')
+  async refresh(@Req() req: Request): Promise<{ access_token: string }> {
+    const refreshToken = req.cookies['refresh_token'] as string;
+    const access_token = await this.authService.refresh(refreshToken);
     return { access_token };
   }
 }

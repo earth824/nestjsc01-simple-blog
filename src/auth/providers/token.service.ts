@@ -26,6 +26,16 @@ export class TokenService {
       expiresIn: this.jwtConfiguration.JWT_REFRESH_EXPIRES
     });
   }
-  // verifyAccessToken(token: string): Promise<any> {}
-  // verifyRefreshToken(token: string) {}
+
+  verifyAccessToken(token: string): Promise<Payload> {
+    return this.jwtService.verifyAsync(token, {
+      secret: this.jwtConfiguration.JWT_ACCESS_SECRET
+    });
+  }
+
+  verifyRefreshToken(token: string): Promise<Payload> {
+    return this.jwtService.verifyAsync(token, {
+      secret: this.jwtConfiguration.JWT_REFRESH_SECRET
+    });
+  }
 }

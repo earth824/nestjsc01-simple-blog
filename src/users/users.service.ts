@@ -13,4 +13,11 @@ export class UsersService {
   async create(data: Prisma.UserCreateInput): Promise<void> {
     await this.prismaService.user.create({ data });
   }
+
+  async findById(id: string): Promise<Omit<User, 'password'> | null> {
+    return this.prismaService.user.findUnique({
+      where: { id },
+      omit: { password: true }
+    });
+  }
 }
